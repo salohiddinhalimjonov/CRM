@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import TimeUnit, Advertisement, Speciality, Teacher, Course, OnlyContacted, Student, AttendedMockLesson
+from .models import TimeUnit, Advertisement, Teacher, Course, OnlyContacted, Student, AttendedMockLesson
 
 
 class TimeUnitSerializer(serializers.ModelSerializer):
@@ -11,12 +11,6 @@ class TimeUnitSerializer(serializers.ModelSerializer):
 class AdvertisementSerializer(serializers.ModelSerializer):
     class Meta:
         model=Advertisement
-        fields='__all__'
-
-
-class SpecialitySerializer(serializers.ModelSerializer):
-    class Meta:
-        model=Speciality
         fields='__all__'
 
 
