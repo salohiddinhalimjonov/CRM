@@ -1,3 +1,4 @@
+from datetime import date
 from rest_framework import serializers
 from .models import TimeUnit, Advertisement, Teacher, Course, OnlyContacted, Student, AttendedMockLesson
 
@@ -5,13 +6,29 @@ from .models import TimeUnit, Advertisement, Teacher, Course, OnlyContacted, Stu
 class TimeUnitSerializer(serializers.ModelSerializer):
     class Meta:
         model=TimeUnit
-        fields='__all__'
+        fields=('id','name')
+        extra_kwargs = {
+            'id': {'read_only': 'True'},
+        }
 
 
 class AdvertisementSerializer(serializers.ModelSerializer):
     class Meta:
         model=Advertisement
-        fields='__all__'
+        fields=('id','name', 'date_added')
+        extra_kwargs = {
+            'id': {'read_only': 'True'},
+        }
+
+    def to_representation(self,instance):
+        representation = super().to_representation(instance)
+        date_stat = self.context['request'].query_params.get('date')
+        if date_stat:
+            representation['advertisement_statistics'] = instance.onlycontacted_set.filter(date_of_contacting__gte=date_stat).count()
+        else:
+            representation['advertisement_statistics'] = instance.onlycontacted_set.filter(date_of_contacting__lte=date.today()).count()
+
+        return representation
 
 
 class TeacherSerializer(serializers.ModelSerializer):
@@ -42,3 +59,4 @@ class AttendedMockLessonSerializer(serializers.ModelSerializer):
     class Meta:
         model=AttendedMockLesson
         fields='__all__'
+

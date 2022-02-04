@@ -25,32 +25,7 @@ class UserRegisterView(APIView):
         data = {'user': serializer.data, 'is_admin': user.is_superuser}
         return Response(data, status=status.HTTP_201_CREATED)
 
- # If a `data=` argument is passed (it must be passed like this: Serializer(data=blu or blu.blu) then:
-    #serializer.is_valid() - Available.
-    #serializer.initial_data - Available.
-    #serializer.validated_data - Only available after calling `is_valid()=True`
-    #serializer.errors - Only available after calling `is_valid()`
-   #serializer.data - Only available after calling `is_valid()`
-#   If a `data=` argument is not passed (it must be passed like this: Serializer(data=blu or blu.blu)then:
-#   serializer.is_valid() - Not available.
-#   serializer.initial_data - not available.
-#   serializer.validated_data - Not available.
-#   serializer.errors - Not available.
-#   serializer.data - Available.
 
-    #serializer.initial_data - we can use it before validation(is_valid=True)
-    #serializer.data - we can use it after validation with not validated values
-    #we can not directly use request.user, instead if we use concrete views we should call self.get_object() in user related model,
-    # else we have to get it like this(EducationCentre.objects.get(email=email))
-    #request.data - incoming data from frontend part in json format
-    #serializer.validated_data - we can use ut after validation with validated values
-    #serializer converts incoming data in json format to python native data type. This process is called deserializing
-    #serializer converts complex data(queryset, object..) to python native data type(dict,..). This is called serializing.
-    #Python native data type is converted to json in Response
-    #is_valid is called in create(), update(), partial_update(). Because other actions dont take incoming data
-    #More info about request-response cycle in the url: https://sourcery.blog/how-request-response-cycle-works-in-django-rest-framework/
-    #data : is a dict and you can see it only after is_valid() (you can see only not validated values)
-    #validated_data is an OrderedDict and you can see it only after is_valid() and is_valid() == True
 class ChangePasswordView(APIView):
     http_method_names = ['post']
     permission_classes = (IsAuthenticated,)
@@ -86,6 +61,33 @@ class UserListView(APIView):
         users = EducationCentre.objects.all()
         serializer = UsersListSerializer(users, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    # If a `data=` argument is passed (it must be passed like this: Serializer(data=blu or blu.blu) then:
+    # serializer.is_valid() - Available.
+    # serializer.initial_data - Available.
+    # serializer.validated_data - Only available after calling `is_valid()=True`
+    # serializer.errors - Only available after calling `is_valid()`
+    # serializer.data - Only available after calling `is_valid()`
+    #   If a `data=` argument is not passed (it must be passed like this: Serializer(data=blu or blu.blu)then:
+    #   serializer.is_valid() - Not available.
+    #   serializer.initial_data - not available.
+    #   serializer.validated_data - Not available.
+    #   serializer.errors - Not available.
+    #   serializer.data - Available.
+
+    # serializer.initial_data - we can use it before validation(is_valid=True)
+    # serializer.data - we can use it after validation with not validated values
+    # we can not directly use request.user, instead if we use concrete views we should call self.get_object() in user related model,
+    # else we have to get it like this(EducationCentre.objects.get(email=email))
+    # request.data - incoming data from frontend part in json format
+    # serializer.validated_data - we can use ut after validation with validated values
+    # serializer converts incoming data in json format to python native data type. This process is called deserializing
+    # serializer converts complex data(queryset, object..) to python native data type(dict,..). This is called serializing.
+    # Python native data type is converted to json in Response
+    # is_valid is called in create(), update(), partial_update(). Because other actions dont take incoming data
+    # More info about request-response cycle in the url: https://sourcery.blog/how-request-response-cycle-works-in-django-rest-framework/
+    # data : is a dict and you can see it only after is_valid() (you can see only not validated values)
+    # validated_data is an OrderedDict and you can see it only after is_valid() and is_valid() == True
 
 
 

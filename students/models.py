@@ -24,7 +24,6 @@ class Advertisement(models.Model):
     name = models.CharField(max_length=64)
     date_added = models.DateField()
 
-
 class Course(models.Model):
     education_centre = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     name = models.CharField(max_length=32)
