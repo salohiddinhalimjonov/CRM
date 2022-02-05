@@ -1,8 +1,10 @@
 from django.shortcuts import get_object_or_404
+from django.db.models import Q
 from rest_framework import status, generics
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.pagination import LimitOffsetPagination
 from .serializers import UserRegisterSerializer, UserProfileSerializer, UserPasswordChangeSerializer, UsersListSerializer
 from .models import EducationCentre
 
@@ -56,9 +58,21 @@ class UserProfileView(generics.RetrieveUpdateDestroyAPIView):
 
 class UserListView(APIView):
     permission_classes=(IsAdminUser,)
+    pagination_class  = LimitOffsetPagination
 
-    def get(self,request,*args,**kwargs):#add some features
+    def get(self,request,*args,**kwargs):
+        search = request.query_params.get('search')
         users = EducationCentre.objects.all()
+        if search:
+            search_list = str(search).split(' ')
+            queries = [Q(ECemail__icontains=word) |
+                       Q(ECphonenumber__icontains=word) |
+                       Q(ECname__icontains=word) for word in search_list]
+            query = queries.pop()
+            for items in queries:
+                query |= items
+            users = users.filter(query)
+
         serializer = UsersListSerializer(users, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

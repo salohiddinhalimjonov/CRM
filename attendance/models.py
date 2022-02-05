@@ -9,14 +9,20 @@ class Holiday(models.Model):   #holiday days are entered here. As a result these
     holiday_duration = models.IntegerField(default=1)
     time_unit = models.ForeignKey(TimeUnit, on_delete=models.PROTECT)
 
+    def __str__(self):
+        return self.holiday_name
 
 class DateTimeOfEntering(models.Model):  #date time of entering the education centre
     student = models.ForeignKey(Student, on_delete=models.CASCADE)#several students can not enter at the same time, but a student can enter in different time
     #Many(Date) to One(Student)
     datetime_of_entering = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return self.datetime_of_entering
 
 class DateTimeOfExiting(models.Model):  #date time of exiting the education centre
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
     date_time_of_exiting = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return self.datetime_of_exiting

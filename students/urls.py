@@ -5,6 +5,6 @@ from .views import TimeUnitView,AdvertisementViewSet
 router = DefaultRouter()
 router.register('advertisement', AdvertisementViewSet, basename='advertisement')
 urlpatterns = [
-    path('time_unit/', TimeUnitView.as_view(), name='time_unit'),
+    # path('time_unit/', TimeUnitView.as_view(), name='time_unit'),
     path('', include(router.urls))
 ]
