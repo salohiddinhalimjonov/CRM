@@ -63,10 +63,12 @@ class TeacherSerializer(serializers.ModelSerializer):
         def validate_passport_id(self,value):
             if len(value) > 9:
                 raise serializers.ValidationError('Length of passport id  can not be more than 9 characters!')
+            return value
 
         def validate_photo(self,value):
             if not value.endswith('png') or not value.endswith('jpg'):
                 raise serializers.ValidationError('Image should be in png or jpg format!')
+            return value
 
 
 class CourseSerializer(serializers.ModelSerializer):
@@ -94,11 +96,27 @@ class StudentSerializer(serializers.ModelSerializer):
     penalty = serializers.PrimaryKeyRelatedField(many=True, queryset=Penalty.objects.all())
     class Meta:
         model=Student
-        fields=('id','student_id','only_contacted', 'photo', 'parent_phone_number', 'selected_course','has_paid_fee', 'penalty', 'total_payment_per_month')
+        fields=('id','student_id','only_contacted', 'photo', 'parent_phone_number', 'selected_course','has_paid_fee',
+                'penalty', 'total_payment_per_month','unit1', 'total_loan_amount', 'unit2')
         extra_kwargs = {
             'id': {'read_only': 'True'},
         }
 
+    def validate(self,data):
+        if data['has_paid_fee']==True and data['total_loan_amount']>0:
+            raise serializers.ValidationError('You can\'t pay tuition fee if you have loan')
+        return data
+
     def validate_photo(self, value):
         if not value.endswith('png') or not value.endswith('jpg'):
             raise serializers.ValidationError('Image should be in png or jpg format!')
+        return value
+
+
+class StudentListSerializer(serializers.ModelSerializer):
+    full_name = serializers.CharField(source="only_contacted.full_name")
+    phone_number = serializers.CharField(source="only_contacted.phone_number")
+    class Meta:
+        model = Student
+        fields = (
+        'student_id','full_name','phone_number','parent_phone_number')

@@ -90,6 +90,10 @@ class OnlyContacted(models.Model): #Students who are interested in this educatio
         return self.full_name
 
 class Student(models.Model): #Contacted students who decided to be a student of the education centre
+    UNIT = (
+        ('So\'m', 'So\'m'),
+        ('$', '$')
+    )
     student_id = models.CharField(max_length=10,unique=True, default=generate_random_id)# default id is also generated for this model,
     # but every student should have their unique id, it is used for determining student attendance
     only_contacted = models.OneToOneField(OnlyContacted, on_delete=models.CASCADE)
@@ -98,9 +102,14 @@ class Student(models.Model): #Contacted students who decided to be a student of 
     selected_course = models.ManyToManyField(Course)
     date_of_receipt = models.DateField(auto_now_add=True)
     has_paid_fee = models.BooleanField(default=False)
+    date_of_last_payment = models.DateField()
     penalty = models.ManyToManyField(Penalty)
-    total_payment_per_month = models.DecimalField(max_digits=12,decimal_places=2, null=True,blank=True)
+    total_payment_per_month = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    unit1 = models.TextField(choices=UNIT, default='So\'m')
+    total_loan_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    unit2 = models.TextField(choices=UNIT, default='So\'m')
 
     def __str__(self):
         return self.student_id
+
 

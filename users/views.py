@@ -53,7 +53,7 @@ class UserProfileView(generics.RetrieveUpdateDestroyAPIView):
          serializer = UserProfileSerializer(instance=user, data=request.data, partial=True)
          serializer.is_valid(raise_exception=True)
          serializer.save()
-         return Response(serializer.data)
+         return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 
 
 class UserListView(APIView):
