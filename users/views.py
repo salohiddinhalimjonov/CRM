@@ -1,5 +1,7 @@
+from datetime import date
 from django.shortcuts import get_object_or_404
-from django.db.models import Q
+from django.db.models import Q, Sum
+from django.http import Http404
 from rest_framework import status, generics
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
@@ -7,6 +9,8 @@ from rest_framework.response import Response
 from rest_framework.pagination import LimitOffsetPagination
 from .serializers import UserRegisterSerializer, UserProfileSerializer, UserPasswordChangeSerializer, UsersListSerializer
 from .models import EducationCentre
+from students.models import Student
+
 
 class UserRegisterView(APIView):
     permission_classes = [AllowAny]
@@ -43,7 +47,7 @@ class ChangePasswordView(APIView):
         return Response({"message":"Password has been changed successfully"}, status=status.HTTP_200_OK)
 
 
-class UserProfileView(generics.UpdateDestroyAPIView):
+class UserProfileView(generics.RetrieveUpdateDestroyAPIView):
      queryset = EducationCentre.objects.all()
      serializer_class = UserProfileSerializer
      permission_classes = (IsAuthenticated,)
@@ -56,9 +60,52 @@ class UserProfileView(generics.UpdateDestroyAPIView):
          return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 
 
-class UserStatistics(APIView):
-    pass
+class UserStatisticsView(APIView):
+    permission_classes = (IsAuthenticated,)
 
+    def get_object(self,pk):
+        try:
+            user = EducationCentre.objects.get(id=pk)
+        except user.DoesNotExist:
+            raise Http404
+
+    def get(self,request,pk, *args,**kwargs):
+        user = self.get_object(id=pk)
+        students = Student.objects.filter(only_contacted__education_centre=user)
+        today = date.today()
+        expected_money = 0
+        result_money = 0
+        for student in students:
+            paid_fee = student.has_paid_fee
+            date_for_last_payment = student.date_for_last_payment
+            total_payment_per_month = student.total_payment_per_month
+            loan = student.total_loan_amount
+
+            num_of_months_for_loan = (today.year - date_for_last_payment.year) * 12 + (
+                        today.month - date_for_last_payment.month) - 1
+            penalty_amount = student.penalty.aggregate(Sum('penalty_in_percent')).get('penalty_in_percent__sum')
+            total_payment_of_month = student.courses.aggregate(Sum('cost_per_month')).get('cost_per_month__sum')
+            loan_amount = loan + num_of_months_for_loan * total_payment_per_month + penalty_amount * total_payment_per_month / 100
+            total_payment_of_cmonth = total_payment_per_month + penalty_amount * total_payment_per_month / 100
+            expected_money+=total_payment_of_cmonth
+            if paid_fee == True and num_of_months_for_loan == -1:
+                result_money += total_payment_of_cmonth
+                student.update(total_payment_per_month=0)
+            if paid_fee == True and num_of_months_for_loan == 0:
+                student.update(paid_fee=False, total_payment_per_month=total_payment_of_cmonth)
+            if paid_fee == False and num_of_months_for_loan > 0:
+                student.update(total_loan_amount=loan_amount, total_payment_per_month=total_payment_of_month)
+            if paid_fee == True and num_of_months_for_loan > 0:
+                student.update(has_paid_fee=False, total_payment_per_month=total_payment_of_month,
+                               total_loan_amount=loan_amount)
+
+        data = {
+            'expected_money' : expected_money,
+            'result_money' : result_money,
+
+        }
+
+        return Response(data, status=status.HTTP_200_OK)
 
 class UserListView(APIView):
     permission_classes=(IsAdminUser,)

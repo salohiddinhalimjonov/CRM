@@ -9,12 +9,13 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
+from users.models import EducationCentre
 from .models import TimeUnit, Advertisement, Teacher, Course, OnlyContacted, Student,Penalty
 from .serializers import TimeUnitSerializer, AdvertisementSerializer, TeacherSerializer, CourseSerializer,\
     OnlyContactedSerializer, StudentSerializer, PenaltySerializer, StudentListSerializer
 
 
-class TimeUnitView(ModelViewSet):
+class TimeUnitViewSet(ModelViewSet):
     permission_classes = (IsAuthenticated,)
     pagination_class = LimitOffsetPagination
     serializer_class = TimeUnitSerializer
@@ -70,7 +71,11 @@ class AdvertisementViewSet(ModelViewSet):
 class StudentView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = (IsAuthenticated,)
     serializer_class = StudentSerializer
-    queryset = Student.objects.all()
+
+    def get_queryset(self):
+        user=self.request.user
+        students = Student.objects.filter(only_contacted__education_centre=user)
+        return students
 
     def retreive(self,request,*args,**kwargs):
         student = self.get_object()
@@ -84,7 +89,7 @@ class StudentView(generics.RetrieveUpdateDestroyAPIView):
         penalty_amount = student.penalty.aggregate(Sum('penalty_in_percent')).get('penalty_in_percent__sum')
         total_payment_of_month = student.courses.aggregate(Sum('cost_per_month')).get('cost_per_month__sum')
         loan_amount = loan + num_of_months_for_loan * total_payment_per_month + penalty_amount * total_payment_per_month / 100
-
+# date_for_last_payment must be entered if student pays loan or tuition fee
         if paid_fee == True and num_of_months_for_loan == -1:
             student.update(total_payment_per_month=0)
         if paid_fee==True and num_of_months_for_loan==0:
@@ -109,7 +114,12 @@ class StudentView(generics.RetrieveUpdateDestroyAPIView):
 
 class StudentViewListCreate(generics.ListCreateAPIView):
     permission_classes = (IsAuthenticated,)
-    queryset = Student.objects.all()
+
+    def get_queryset(self):
+        user=self.request.user
+        students = Student.objects.filter(only_contacted__education_centre=user)
+        return students
+        #request.user is an instance of AUTH_USER_MODEL
 
     def get_serializer_class(self):
         if self.request.method=='GET':
@@ -122,7 +132,7 @@ class StudentViewListCreate(generics.ListCreateAPIView):
         search = request.query_params.get('search',None)
         not_paid_fee = request.query_params.get('paid_fee',None)
         if selected_course_id:
-            queryset = self.queryset.filter(selected_course=selected_course_id)
+            queryset = self.get_queryset.filter(selected_course=selected_course_id)
         if penalty:
             queryset = queryset.filter(penalty=penalty)
         if not_paid_fee:
@@ -139,7 +149,7 @@ class StudentViewListCreate(generics.ListCreateAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class TeacherView(ModelViewSet):
+class TeacherViewSet(ModelViewSet):
     permission_classes = (IsAuthenticated,)
     pagination_class = LimitOffsetPagination
     serializer_class = AdvertisementSerializer
@@ -149,8 +159,8 @@ class TeacherView(ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        advertisement = Advertisement.objects.filter(education_centre=user)
-        return advertisement
+        teacher = Teacher.objects.filter(education_centre=user)
+        return teacher
 
     def perform_create(self, serializer):
         serializer.save(education_centre=self.request.user)
@@ -177,7 +187,7 @@ class TeacherView(ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class CourseView(ModelViewSet):
+class CourseViewSet(ModelViewSet):
     permission_classes = (IsAuthenticated,)
     pagination_class = LimitOffsetPagination
     serializer_class = CourseSerializer
@@ -196,7 +206,7 @@ class CourseView(ModelViewSet):
     def perform_update(self, serializer):
         serializer.save(education_centre=self.request.user)
 
-    @action(detail=True,method=['POST'], url_path='add-student')
+    @action(detail=True, methods=['POST'], url_path='add-student')
     def add_student(self,request,pk, *args,**kwargs):
         course = self.get_object()
         student_id = request.data['student_id']
@@ -205,7 +215,7 @@ class CourseView(ModelViewSet):
         student.save()
         return Response({'status':'Success!'})
 
-    @action(detail=True,method=['POST'], url_path='add-teacher')
+    @action(detail=True,methods=['POST'], url_path='add-teacher')
     def add_teacher(self,request,pk,*args,**kwargs):
         course = self.get_object()
         teacher_id = request.data['teacher_id']
@@ -214,7 +224,7 @@ class CourseView(ModelViewSet):
         teacher.save()
         return Response({'status':'Success!'})
 
-    @action(detail=True,method=['POST'], url_path='remove-student')
+    @action(detail=True,methods=['POST'], url_path='remove-student')
     def remove_student(self,request,pk,*args,**kwargs):
         course = self.get_object()
         student_id = request.data['student_id']
@@ -223,7 +233,7 @@ class CourseView(ModelViewSet):
         student.save()
         return Response({'status':'Success!'})
 
-    @action(detail=True, method=['POST'], url_path='remove-teacher')
+    @action(detail=True, methods=['POST'], url_path='remove-teacher')
     def remove_teacher(self, request, pk, *args, **kwargs):
         course = self.get_object()
         teacher_id = request.data['teacher_id']
@@ -262,7 +272,7 @@ class PenaltyViewListCreate(generics.ListCreateAPIView):
         serializer.save(education_centre=self.request.user)
 
 
-class OnlyContacted(ModelViewSet):
+class OnlyContactedViewSet(ModelViewSet):
     permission_classes = (IsAuthenticated,)
     pagination_class = LimitOffsetPagination
     serializer_class = OnlyContactedSerializer
