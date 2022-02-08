@@ -86,8 +86,12 @@ class StudentView(generics.RetrieveUpdateDestroyAPIView):
         today = date.today()
 
         num_of_months_for_loan = (today.year - date_for_last_payment.year) * 12 + (today.month - date_for_last_payment.month) - 1
-        penalty_amount = student.penalty.aggregate(Sum('penalty_in_percent')).get('penalty_in_percent__sum')
-        total_payment_of_month = student.courses.aggregate(Sum('cost_per_month')).get('cost_per_month__sum')
+        penalty_amount = 0
+        for obj in student.penalty.all():
+            penalty_amount += obj.penalty_in_percent
+        total_payment_of_month = 0
+        for obj in student.penalty.all():
+            total_payment_of_month += obj.cost_per_month
         loan_amount = loan + num_of_months_for_loan * total_payment_per_month + penalty_amount * total_payment_per_month / 100
 # date_for_last_payment must be entered if student pays loan or tuition fee
         if paid_fee == True and num_of_months_for_loan == -1:
