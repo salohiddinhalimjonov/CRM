@@ -85,24 +85,35 @@ class StudentView(generics.RetrieveUpdateDestroyAPIView):
         loan = student.total_loan_amount
         today = date.today()
 
-        num_of_months_for_loan = (today.year - date_for_last_payment.year) * 12 + (today.month - date_for_last_payment.month) - 1
         penalty_amount = 0
         for obj in student.penalty.all():
             penalty_amount += obj.penalty_in_percent
+
         total_payment_of_month = 0
         for obj in student.penalty.all():
             total_payment_of_month += obj.cost_per_month
+
+        num_of_months_for_loan = (today.year - date_for_last_payment.year) * 12 + (today.month - date_for_last_payment.month) - 1
         loan_amount = loan + num_of_months_for_loan * total_payment_per_month + penalty_amount * total_payment_per_month / 100
-# date_for_last_payment must be entered if student pays loan or tuition fee
+        total_payment_of_cmonth = total_payment_per_month + penalty_amount * total_payment_per_month / 100
+
+        # date_for_last_payment must be entered if student pays loan or tuition fee
         if paid_fee == True and num_of_months_for_loan == -1:
-            student.update(total_payment_per_month=0)
-        if paid_fee==True and num_of_months_for_loan==0:
-            total_payment_of_month = total_payment_per_month + penalty_amount * total_payment_per_month / 100
-            student.update(paid_fee=False,total_payment_per_month=total_payment_of_month)
-        if paid_fee==False and num_of_months_for_loan > 0:
-            student.update(total_loan_amount=loan_amount, total_payment_per_month=total_payment_of_month)
+            student.total_payment_per_month = 0
+            student.save(update_fields=['total_payment_per_month'])
+        if paid_fee == True and num_of_months_for_loan == 0:
+            student.has_paid_fee = False
+            student.total_payment_per_month = total_payment_of_cmonth
+            student.save(update_fields=['total_payment_per_month', 'has_paid_fee'])
+        if paid_fee == False and num_of_months_for_loan > 0:
+            student.total_loan_amount = loan_amount
+            student.total_payment_per_month = total_payment_of_month
+            student.save(update_fields=['total_payment_per_month', 'total_loan_amount'])
         if paid_fee == True and num_of_months_for_loan > 0:
-            student.update(has_paid_fee=False,total_payment_per_month=total_payment_of_month, total_loan_amount=loan_amount)
+            student.has_paid_fee = False
+            student.total_payment_per_month = total_payment_of_month
+            student.total_loan_amount = loan_amount
+            student.save(update_fields=['has_paid_fee', 'total_payment_per_month', 'total_loan_amount'])
 
         serializer = StudentSerializer(data=student)
         return Response(serializer.data, status=status.HTTP_200_OK)

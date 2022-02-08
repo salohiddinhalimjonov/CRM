@@ -94,14 +94,21 @@ class UserStatisticsView(APIView):
             expected_money+=total_payment_of_cmonth
             if paid_fee == True and num_of_months_for_loan == -1:
                 result_money += total_payment_of_cmonth
-                student.update(total_payment_per_month=0)
+                student.total_payment_per_month=0
+                student.save(update_fields=['total_payment_per_month'])
             if paid_fee == True and num_of_months_for_loan == 0:
-                student.update(paid_fee=False, total_payment_per_month=total_payment_of_cmonth)
+                student.has_paid_fee=False
+                student.total_payment_per_month=total_payment_of_cmonth
+                student.save(update_fields=['total_payment_per_month', 'has_paid_fee'])
             if paid_fee == False and num_of_months_for_loan > 0:
-                student.update(total_loan_amount=loan_amount, total_payment_per_month=total_payment_of_month)
+                student.total_loan_amount=loan_amount
+                student.total_payment_per_month=total_payment_of_month
+                student.save(update_fields=['total_payment_per_month', 'total_loan_amount'])
             if paid_fee == True and num_of_months_for_loan > 0:
-                student.update(has_paid_fee=False, total_payment_per_month=total_payment_of_month,
-                               total_loan_amount=loan_amount)
+                student.has_paid_fee=False
+                student.total_payment_per_month=total_payment_of_month
+                student.total_loan_amount=loan_amount
+                student.save(update_fields=['has_paid_fee', 'total_payment_per_month', 'total_loan_amount'])
 
         data = {
             'expected_money' : expected_money,
