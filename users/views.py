@@ -43,7 +43,7 @@ class ChangePasswordView(APIView):
         return Response({"message":"Password has been changed successfully"}, status=status.HTTP_200_OK)
 
 
-class UserProfileView(generics.RetrieveUpdateDestroyAPIView):
+class UserProfileView(generics.UpdateDestroyAPIView):
      queryset = EducationCentre.objects.all()
      serializer_class = UserProfileSerializer
      permission_classes = (IsAuthenticated,)
@@ -54,6 +54,10 @@ class UserProfileView(generics.RetrieveUpdateDestroyAPIView):
          serializer.is_valid(raise_exception=True)
          serializer.save()
          return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+
+
+class UserStatistics(APIView):
+    pass
 
 
 class UserListView(APIView):

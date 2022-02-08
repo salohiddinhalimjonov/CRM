@@ -79,6 +79,11 @@ class CourseSerializer(serializers.ModelSerializer):
             'id': {'read_only': 'True'},
         }
 
+        def to_representation(self,instance):
+            representation = super().to_representation(instance)
+            representation['teacher_number'] = instance.teacher_set.all().count()
+            representation['student_number'] = instance.student_set.all().count()
+
 
 class OnlyContactedSerializer(serializers.ModelSerializer):
     course_interested = serializers.PrimaryKeyRelatedField(many=True, queryset=Course.objects.all())

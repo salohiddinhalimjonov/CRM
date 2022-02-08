@@ -73,7 +73,7 @@ class UsersListSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         representation['teachers'] = instance.teacher_set.all().count()
         representation['courses'] = instance.course_set.all().count()
-        representation['students'] = instance.onlycontacted_set.filter(has_been_student=True)
+        representation['students'] = instance.onlycontacted_set.filter(has_been_student=True).count()
         return representation
 
 #https://stackoverflow.com/questions/42000687/what-are-the-differences-between-data-and-validated-data

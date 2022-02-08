@@ -35,6 +35,10 @@ class Advertisement(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        ordering=['name']
+
+
 class Penalty(models.Model):
     education_centre = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     name = models.CharField(max_length=64)
@@ -43,6 +47,10 @@ class Penalty(models.Model):
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        ordering=['name']
+
 
 class Course(models.Model):
     UNIT = (
@@ -75,6 +83,10 @@ class Teacher(models.Model):
 
     def __str__(self):
         return self.full_name
+
+    class Meta:
+        ordering=['experience']
+
 
 class OnlyContacted(models.Model): #Students who are interested in this education centre and contacted for getting info about it
     education_centre = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
